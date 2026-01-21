@@ -297,16 +297,52 @@ elif page == "Análise":
     })
     df_curva.set_index("Hora", inplace=True)
 
-    # --- 3. VISUALIZAÇÃO ---
+    # --- 3. VISUALIZAÇÃO (Atualizado com Destaque na Ponta) ---
+    import plotly.graph_objects as go
+
     st.markdown("---")
     st.subheader("2. Perfil de Carga Diário Estimado")
     
     col_graph, col_kpi = st.columns([3, 1])
 
     with col_graph:
-        # Gráfico de Área
-        st.area_chart(df_curva, color="#0068c9", use_container_width=True)
-        st.caption("A área azul representa o consumo de energia ao longo das 24 horas do dia típico.")
+        # Criação do Gráfico com Plotly para ter controle total
+        fig = go.Figure()
+
+        # Adiciona a curva de carga (Área preenchida)
+        fig.add_trace(go.Scatter(
+            x=df_curva.index,
+            y=df_curva["Consumo (kW)"],
+            fill='tozeroy',
+            mode='lines',
+            line=dict(width=2, color='#0068c9'),
+            name='Demanda (kW)'
+        ))
+
+        # Adiciona o Retângulo de Destaque (Horário de Ponta: 18h as 21h)
+        # O x0=18 e x1=20.9 garante que cubra as colunas das 18, 19 e 20h visualmente
+        fig.add_vrect(
+            x0=18, x1=21, 
+            fillcolor="red", opacity=0.15, 
+            layer="below", line_width=0,
+            annotation_text="Horário de Ponta", 
+            annotation_position="top left",
+            annotation_font_color="red"
+        )
+
+        # Ajustes visuais do gráfico
+        fig.update_layout(
+            title="Curva de Carga Diária Típica",
+            xaxis_title="Hora do Dia",
+            yaxis_title="Potência (kW)",
+            xaxis=dict(tickmode='linear', dtick=2, range=[0, 23.5]), # Mostra eixo X de 2 em 2 horas
+            margin=dict(l=20, r=20, t=40, b=20),
+            height=400,
+            hovermode="x unified" # Mostra o valor ao passar o mouse
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+        st.caption("A área sombreada em vermelho indica o período de Horário de Ponta (18h às 21h), onde a tarifa de energia é mais cara.")
 
     with col_kpi:
         st.markdown("##### Resumo Diário")
@@ -315,5 +351,8 @@ elif page == "Análise":
         
         st.metric("Consumo Diário", f"{consumo_diario:,.0f} kWh")
         st.metric("Demanda Máxima", f"{pico_demanda:,.1f} kW", help=f"Ocorre às {hora_pico}h")
-        st.metric("Energia na Ponta", f"{meta_ponta:,.1f} kWh", delta=f"{perc_ponta}% do total")
-        st.metric("Energia Fora Ponta", f"{meta_fora_ponta:,.1f} kWh")
+        
+        # Métrica com cor diferente para chamar atenção
+        st.markdown("---")
+        st.metric("Consumo na Ponta", f"{meta_ponta:,.1f} kWh", delta=f"{perc_ponta}% do total", delta_color="inverse")
+        st.metric("Consumo Fora Ponta", f"{meta_fora_ponta:,.1f} kWh")
