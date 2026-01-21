@@ -332,14 +332,20 @@ elif page == "Análise":
 
         # Ajustes visuais do gráfico
         fig.update_layout(
-            title="Curva de Carga Diária Típica",
-            xaxis_title="Hora do Dia",
-            yaxis_title="Potência (kW)",
-            xaxis=dict(tickmode='linear', dtick=2, range=[0, 23.5]), # Mostra eixo X de 2 em 2 horas
-            margin=dict(l=20, r=20, t=40, b=20),
-            height=400,
-            hovermode="x unified" # Mostra o valor ao passar o mouse
-        )
+        title="Curva de Carga Diária Típica",
+        xaxis=dict(
+            tickmode='linear',
+            dtick=2,
+            range=[0, 23.5],
+            showgrid=False   # ❌ remove grid do eixo X
+        ),
+        yaxis=dict(
+            showgrid=False   # ❌ remove grid do eixo Y
+        ),
+        margin=dict(l=20, r=20, t=40, b=20),
+        height=400,
+        hovermode="x unified"
+    )
 
         st.plotly_chart(fig, use_container_width=True)
         st.caption("A área sombreada em vermelho indica o período de Horário de Ponta (18h às 21h), onde a tarifa de energia é mais cara.")
