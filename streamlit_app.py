@@ -113,7 +113,7 @@ elif page == "Cenário":
     with col_map_viz:
         st.subheader("📍 Localização Geográfica")
         # O parâmetro height ajuda a alinhar a altura com o gráfico ao lado
-        st.map(map_df, zoom=4, use_container_width=True, height=450)
+        st.map(map_df, zoom=5, use_container_width=True, height=450)
 
     with col_chart_viz:
         st.subheader("☀️ Irradiação Média Regional")
