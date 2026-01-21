@@ -2,6 +2,7 @@ import streamlit as st
 # --- PREPARAÇÃO DE DADOS PARA VISUALIZAÇÃO ---
 import pandas as pd
 import plotly.express as px
+import pydeck as pdk # Importando a biblioteca de mapas avançada
 
 # 1. Configuração da Página
 st.set_page_config(
@@ -81,111 +82,86 @@ if page == "Página Inicial":
 elif page == "Cenário":
     st.title("⚙️ Configuração de Cenário")
     
-    # --- 1. BASE DE DADOS (Definida no início para ser usada em tudo) ---
+    # --- 1. BASE DE DADOS ---
     nordeste_data = {
-        "Alagoas": {
-            "lat": -9.66625, "lon": -35.7351, "irradiacao": 5.45,
-            "concessionaria": "Equatorial AL",
-            "tusd_p": 1841.93, "tusd_fp": 83.51, "te": -3.06, 
-            "icms": 0.19, "pis": 0.01, "cofins": 0.04
-        },
-        "Bahia": {
-            "lat": -12.9704, "lon": -38.5124, "irradiacao": 5.80,
-            "concessionaria": "Neoenergia Coelba",
-            "tusd_p": 2676.04, "tusd_fp": 101.42, "te": 32.93, 
-            "icms": 0.205, "pis": 0.01, "cofins": 0.04
-        },
-        "Ceará": {
-            "lat": -3.71722, "lon": -38.5434, "irradiacao": 5.90,
-            "concessionaria": "Enel CE",
-            "tusd_p": 1162.90, "tusd_fp": 88.46, "te": 38.09, 
-            "icms": 0.20, "pis": 0.01, "cofins": 0.04
-        },
-        "Maranhão": {
-            "lat": -2.53073, "lon": -44.3068, "irradiacao": 5.20,
-            "concessionaria": "Equatorial MA",
-            "tusd_p": 2377.47, "tusd_fp": 116.15, "te": 38.60, 
-            "icms": 0.23, "pis": 0.01, "cofins": 0.04
-        },
-        "Paraíba": {
-            "lat": -7.11532, "lon": -34.861, "irradiacao": 5.90,
-            "concessionaria": "Energisa PB",
-            "tusd_p": 1263.03, "tusd_fp": 96.59, "te": 30.30, 
-            "icms": 0.20, "pis": 0.01, "cofins": 0.04
-        },
-        "Pernambuco": {
-            "lat": -8.05428, "lon": -34.8813, "irradiacao": 5.70,
-            "concessionaria": "Neoenergia Pernambuco",
-            "tusd_p": 1244.41, "tusd_fp": 94.68, "te": 29.14, 
-            "icms": 0.205, "pis": 0.01, "cofins": 0.04
-        },
-        "Piauí": {
-            "lat": -5.08921, "lon": -42.8016, "irradiacao": 5.85,
-            "concessionaria": "Equatorial PI",
-            "tusd_p": 2296.63, "tusd_fp": 140.21, "te": 33.71, 
-            "icms": 0.225, "pis": 0.01, "cofins": 0.04
-        },
-        "Rio Grande do Norte": {
-            "lat": -5.79448, "lon": -35.211, "irradiacao": 6.10,
-            "concessionaria": "Neoenergia Cosern",
-            "tusd_p": 1867.81, "tusd_fp": 91.56, "te": 29.46, 
-            "icms": 0.20, "pis": 0.01, "cofins": 0.04
-        },
-        "Sergipe": {
-            "lat": -10.9472, "lon": -37.0731, "irradiacao": 5.40,
-            "concessionaria": "Energisa SE",
-            "tusd_p": 1702.94, "tusd_fp": 84.93, "te": 23.15, 
-            "icms": 0.19, "pis": 0.01, "cofins": 0.04
-        }
+        "Alagoas": {"lat": -9.66625, "lon": -35.7351, "irradiacao": 5.45, "concessionaria": "Equatorial AL", "tusd_p": 1841.93, "tusd_fp": 83.51, "te": -3.06, "icms": 0.19, "pis": 0.01, "cofins": 0.04},
+        "Bahia": {"lat": -12.9704, "lon": -38.5124, "irradiacao": 5.80, "concessionaria": "Neoenergia Coelba", "tusd_p": 2676.04, "tusd_fp": 101.42, "te": 32.93, "icms": 0.205, "pis": 0.01, "cofins": 0.04},
+        "Ceará": {"lat": -3.71722, "lon": -38.5434, "irradiacao": 5.90, "concessionaria": "Enel CE", "tusd_p": 1162.90, "tusd_fp": 88.46, "te": 38.09, "icms": 0.20, "pis": 0.01, "cofins": 0.04},
+        "Maranhão": {"lat": -2.53073, "lon": -44.3068, "irradiacao": 5.20, "concessionaria": "Equatorial MA", "tusd_p": 2377.47, "tusd_fp": 116.15, "te": 38.60, "icms": 0.23, "pis": 0.01, "cofins": 0.04},
+        "Paraíba": {"lat": -7.11532, "lon": -34.861, "irradiacao": 5.90, "concessionaria": "Energisa PB", "tusd_p": 1263.03, "tusd_fp": 96.59, "te": 30.30, "icms": 0.20, "pis": 0.01, "cofins": 0.04},
+        "Pernambuco": {"lat": -8.05428, "lon": -34.8813, "irradiacao": 5.70, "concessionaria": "Neoenergia Pernambuco", "tusd_p": 1244.41, "tusd_fp": 94.68, "te": 29.14, "icms": 0.205, "pis": 0.01, "cofins": 0.04},
+        "Piauí": {"lat": -5.08921, "lon": -42.8016, "irradiacao": 5.85, "concessionaria": "Equatorial PI", "tusd_p": 2296.63, "tusd_fp": 140.21, "te": 33.71, "icms": 0.225, "pis": 0.01, "cofins": 0.04},
+        "Rio Grande do Norte": {"lat": -5.79448, "lon": -35.211, "irradiacao": 6.10, "concessionaria": "Neoenergia Cosern", "tusd_p": 1867.81, "tusd_fp": 91.56, "te": 29.46, "icms": 0.20, "pis": 0.01, "cofins": 0.04},
+        "Sergipe": {"lat": -10.9472, "lon": -37.0731, "irradiacao": 5.40, "concessionaria": "Energisa SE", "tusd_p": 1702.94, "tusd_fp": 84.93, "te": 23.15, "icms": 0.19, "pis": 0.01, "cofins": 0.04}
     }
 
-    # --- 2. LÓGICA DE ZOOM DINÂMICO ---
-    # Verifica qual estado está selecionado no session_state (pela chave 'state_selector')
-    # Se ainda não houver seleção (primeira vez que roda), pega o primeiro da lista (Alagoas)
+    # --- 2. PREPARAÇÃO (Importando Folium) ---
+    import folium
+    from streamlit_folium import st_folium
+    import pandas as pd
+    import plotly.express as px
+
+    # Lógica de Seleção (Antes do Mapa)
     default_state = sorted(nordeste_data.keys())[0]
-    current_state_name = st.session_state.get("state_selector", default_state)
     
-    # Define o centro e o zoom baseado no estado atual
+    # Verifica se já existe seleção no Session State
+    if "state_selector" in st.session_state:
+        current_state_name = st.session_state.state_selector
+    else:
+        current_state_name = default_state
+
+    # Coordenadas de Visão (Foco no estado selecionado)
     view_lat = nordeste_data[current_state_name]["lat"]
     view_lon = nordeste_data[current_state_name]["lon"]
-    view_zoom = 7.0 # Zoom mais próximo para focar no estado
-    
-    map_df = pd.DataFrame.from_dict(nordeste_data, orient='index')
+    # Ajuste o zoom_start conforme necessário (7 costuma ser bom para estados médios)
+    view_zoom = 7 
 
-    states_list = list(nordeste_data.keys())
-    irradiacao_list = [nordeste_data[s]['irradiacao'] for s in states_list]
-    df_irr = pd.DataFrame({'Estado': states_list, 'Irradiação (kWh/m²/dia)': irradiacao_list})
-    df_irr = df_irr.sort_values(by='Irradiação (kWh/m²/dia)', ascending=True)
+    # --- 3. CRIAÇÃO DO MAPA FOLIUM ---
+    # Cria o objeto mapa forçando o centro e o zoom
+    m = folium.Map(location=[view_lat, view_lon], zoom_start=view_zoom)
 
+    # Adiciona os marcadores
+    for estado, dados in nordeste_data.items():
+        is_selected = (estado == current_state_name)
+        
+        # Cor do marcador: Vermelho se selecionado, Azul se não
+        icon_color = 'red' if is_selected else 'blue'
+        icon_prefix = 'fa' if is_selected else 'glyphicon' # Ícone diferente para destaque
+        
+        folium.Marker(
+            [dados['lat'], dados['lon']],
+            popup=f"{estado}: {dados['irradiacao']} kWh/m²",
+            tooltip=estado,
+            icon=folium.Icon(color=icon_color, icon='info-sign')
+        ).add_to(m)
+
+    # --- 4. LAYOUT VISUAL ---
     col_map_viz, col_chart_viz = st.columns([1, 1]) 
 
     with col_map_viz:
         st.subheader("📍 Localização Geográfica")
-        # AQUI ESTÁ A MÁGICA: Passamos latitude, longitude e zoom dinâmicos
-        st.map(
-            map_df, 
-            latitude=view_lat, 
-            longitude=view_lon, 
-            zoom=view_zoom, 
-            use_container_width=True, 
-            height=450
-        )
+        # Renderiza o mapa Folium no Streamlit
+        # height=450 garante o alinhamento com o gráfico ao lado
+        st_folium(m, height=450, use_container_width=True)
 
     with col_chart_viz:
         st.subheader("☀️ Irradiação Média Regional")
-        # Destacar a barra do estado selecionado
-        colors = ['#1f77b4' if estado == current_state_name else '#d3d3d3' for estado in df_irr['Estado']]
+        
+        # Prepara dados grafico
+        df_irr = pd.DataFrame.from_dict(nordeste_data, orient='index').reset_index()
+        df_irr.columns = ['Estado', 'lat', 'lon', 'irradiacao', 'concessionaria', 'tusd_p', 'tusd_fp', 'te', 'icms', 'pis', 'cofins']
+        df_irr = df_irr[['Estado', 'irradiacao']].sort_values(by='irradiacao')
+        
+        colors = ['#EF553B' if estado == current_state_name else '#d3d3d3' for estado in df_irr['Estado']]
         
         fig = px.bar(
             df_irr,
-            x='Irradiação (kWh/m²/dia)',
+            x='irradiacao',
             y='Estado',
             orientation='h',
-            text='Irradiação (kWh/m²/dia)',
+            text='irradiacao',
         )
-        # Atualiza a cor para destacar o escolhido
         fig.update_traces(marker_color=colors, texttemplate='%{text:.2f}', textposition='outside')
-        
         fig.update_layout(
             yaxis_title=None,
             xaxis_title="GHI Médio (kWh/m²/dia)",
@@ -194,25 +170,23 @@ elif page == "Cenário":
         )
         st.plotly_chart(fig, use_container_width=True)
 
-
     st.markdown("---")
 
-    # --- 4. SELEÇÃO DE PARÂMETROS ---
+    # --- 5. INPUTS E DADOS ---
     st.subheader("Definição de Parâmetros Tarifários (Grupo A4 - Verde)")
-    
-    # O parametro KEY é fundamental: ele conecta esse input com o session_state lido lá em cima
+
+    # Selectbox controlando a variável 'state_selector'
     state_selected = st.selectbox(
         "Selecione o Estado do Cliente:",
         options=sorted(nordeste_data.keys()),
         key="state_selector" 
     )
     
+    # Atualiza Session State Geral e Exibe Dados
     state_info = nordeste_data[state_selected]
     st.session_state['selected_state_data'] = state_info
 
-    # Exibição dos KPIs
     st.markdown(f"**Concessionária:** {state_info['concessionaria']}")
-    
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
     with kpi1: st.metric("TUSD Ponta", f"R$ {state_info['tusd_p']:.2f}")
     with kpi2: st.metric("TUSD Fora Ponta", f"R$ {state_info['tusd_fp']:.2f}")
