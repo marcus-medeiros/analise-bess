@@ -135,50 +135,46 @@ elif page == "Cenário":
     # 2. SELEÇÃO DE ESTADO
     st.subheader("Parâmetros Regionais")
     
-    col_sel, col_info = st.columns([1, 2])
-    
-    with col_sel:
-        state_selected = st.selectbox(
-            "Selecione o Estado para Análise:",
-            options=sorted(nordeste_data.keys())
-        )
+    state_selected = st.selectbox(
+        "Selecione o Estado para Análise:",
+        options=sorted(nordeste_data.keys())
+    )
     
     # Recupera dados do estado selecionado
     state_info = nordeste_data[state_selected]
 
     # 3. EXIBIÇÃO DE DADOS (Metrics)
-    with col_info:
-        st.info(f"Dados Carregados para: **{state_selected}**")
+    st.info(f"Dados Carregados para: **{state_selected}**")
+    
+    c1, c2, c3, c4 = st.columns(4)
+    
+    with c1:
+        st.metric(
+            label="ICMS (2025)",
+            value=f"{state_info['icms']*100:.1f}%",
+            help="Alíquota interna padrão projetada para 2025"
+        )
+    
+    with c2:
+        st.metric(
+            label="PIS/COFINS (Médio)",
+            value=f"{state_info['pis_cofins']*100:.2f}%",
+            help="Alíquota federal média estimada para consumidores"
+        )
         
-        c1, c2, c3, c4 = st.columns(4)
-        
-        with c1:
-            st.metric(
-                label="ICMS (2025)",
-                value=f"{state_info['icms']*100:.1f}%",
-                help="Alíquota interna padrão projetada para 2025"
-            )
-        
-        with c2:
-            st.metric(
-                label="PIS/COFINS (Médio)",
-                value=f"{state_info['pis_cofins']*100:.2f}%",
-                help="Alíquota federal média estimada para consumidores"
-            )
-            
-        with c3:
-            st.metric(
-                label="Total Impostos",
-                value=f"{(state_info['icms'] + state_info['pis_cofins'])*100:.2f}%"
-            )
+    with c3:
+        st.metric(
+            label="Total Impostos",
+            value=f"{(state_info['icms'] + state_info['pis_cofins'])*100:.2f}%"
+        )
 
-        with c4:
-            st.metric(
-                label="Irradiação Solar",
-                value=f"{state_info['irradiacao']} kWh/m²",
-                delta="Média Diária",
-                help="Irradiação Global Horizontal (GHI) média estimada"
-            )
+    with c4:
+        st.metric(
+            label="Irradiação Solar",
+            value=f"{state_info['irradiacao']} kWh/m²",
+            delta="Média Diária",
+            help="Irradiação Global Horizontal (GHI) média estimada"
+        )
 
     # Armazenar seleção no Session State para usar na próxima página (Análise)
     st.session_state['selected_state_data'] = state_info
