@@ -198,5 +198,122 @@ elif page == "Cenário":
 
 
 elif page == "Análise":
-    st.title("📊 Análise de Resultados")
-    st.write("Em construção...")
+    st.title("📊 Análise de Perfil e Demanda")
+    
+    # Verifica se já temos dados do estado (da página anterior)
+    if 'selected_state_data' in st.session_state:
+        dados_estado = st.session_state['selected_state_data']
+        st.info(f"Base de cálculo: Tarifas de **{dados_estado.get('concessionaria', 'Estado Selecionado')}**")
+    else:
+        st.warning("⚠️ Nenhum estado selecionado na aba 'Cenário'. Usando valores padrão.")
+
+    # --- 1. INPUTS DO CLIENTE ---
+    st.subheader("1. Caracterização da Carga")
+    
+    col_input1, col_input2, col_input3 = st.columns(3)
+    
+    with col_input1:
+        consumo_mensal = st.number_input(
+            "Consumo Médio Mensal (kWh)", 
+            min_value=100.0, 
+            value=15000.0, 
+            step=500.0,
+            help="Média de consumo da fatura de energia."
+        )
+    
+    with col_input2:
+        perc_ponta = st.slider(
+            "% Consumo na Ponta (18h-21h)", 
+            min_value=0, 
+            max_value=100, 
+            value=15,
+            help="Quanto do consumo total ocorre no horário de ponta."
+        )
+        # Cálculo automático da Fora Ponta
+        perc_fora_ponta = 100 - perc_ponta
+        st.caption(f"Consumo Fora Ponta: **{perc_fora_ponta}%**")
+
+    with col_input3:
+        perfil_tipo = st.selectbox(
+            "Tipo de Perfil de Carga",
+            ["Comunidade/Residencial", "Escola/Comercial Diurno", "Hospital/Industrial 24h"]
+        )
+
+    # --- 2. GERAÇÃO DA CURVA DE CARGA (SIMULAÇÃO) ---
+    import numpy as np
+    import pandas as pd
+
+    # Definição dos perfis base (pesos horários de 0h a 23h)
+    # Esses pesos dão o "formato" da curva
+    perfis_base = {
+        "Comunidade/Residencial": [
+            0.4, 0.3, 0.3, 0.3, 0.4, 0.6, 1.0, 1.2, 1.0, 0.9, 0.9, 1.0, 
+            1.1, 1.1, 1.0, 1.2, 1.5, 1.8, 2.5, 2.4, 2.2, 1.8, 1.2, 0.8
+        ],
+        "Escola/Comercial Diurno": [
+            0.1, 0.1, 0.1, 0.1, 0.1, 0.2, 0.5, 1.5, 2.0, 2.2, 2.3, 2.2, 
+            1.5, 2.3, 2.4, 2.3, 2.0, 1.0, 0.5, 0.2, 0.1, 0.1, 0.1, 0.1
+        ],
+        "Hospital/Industrial 24h": [
+            0.8, 0.8, 0.8, 0.8, 0.8, 0.9, 1.0, 1.1, 1.2, 1.2, 1.2, 1.2, 
+            1.2, 1.2, 1.2, 1.2, 1.1, 1.1, 1.0, 1.0, 0.9, 0.9, 0.8, 0.8
+        ]
+    }
+
+    # Seleciona o perfil base
+    curve_shape = np.array(perfis_base[perfil_tipo])
+    
+    # Horário de Ponta considerado (ex: 18h, 19h, 20h - 3 horas)
+    indices_ponta = [18, 19, 20] 
+    indices_fora_ponta = [h for h in range(24) if h not in indices_ponta]
+
+    # --- ALGORITMO DE AJUSTE DE CURVA ---
+    # Objetivo: Manter o formato, mas garantir que a soma da energia bata com o input do usuário
+    
+    consumo_diario = consumo_mensal / 30
+    meta_ponta = consumo_diario * (perc_ponta / 100)
+    meta_fora_ponta = consumo_diario * (perc_fora_ponta / 100)
+
+    # Separa os pesos atuais do perfil base
+    soma_pesos_ponta = sum(curve_shape[i] for i in indices_ponta)
+    soma_pesos_fora = sum(curve_shape[i] for i in indices_fora_ponta)
+
+    # Fatores de correção para atingir a meta
+    fator_ponta = meta_ponta / soma_pesos_ponta if soma_pesos_ponta > 0 else 0
+    fator_fora = meta_fora_ponta / soma_pesos_fora if soma_pesos_fora > 0 else 0
+
+    # Cria a curva final ajustada (kW médio por hora)
+    curva_final = np.zeros(24)
+    for i in range(24):
+        if i in indices_ponta:
+            curva_final[i] = curve_shape[i] * fator_ponta
+        else:
+            curva_final[i] = curve_shape[i] * fator_fora
+
+    # Cria DataFrame para o gráfico
+    df_curva = pd.DataFrame({
+        "Hora": list(range(24)),
+        "Consumo (kW)": curva_final
+    })
+    df_curva.set_index("Hora", inplace=True)
+
+    # --- 3. VISUALIZAÇÃO ---
+    st.markdown("---")
+    st.subheader("2. Perfil de Carga Diário Estimado")
+    
+    col_graph, col_kpi = st.columns([3, 1])
+
+    with col_graph:
+        # Gráfico de Área
+        st.area_chart(df_curva, color="#0068c9", use_container_width=True)
+        st.caption("A área azul representa o consumo de energia ao longo das 24 horas do dia típico.")
+
+    with col_kpi:
+        st.markdown("##### Resumo Diário")
+        pico_demanda = max(curva_final)
+        hora_pico = np.argmax(curva_final)
+        
+        st.metric("Consumo Diário", f"{consumo_diario:,.0f} kWh")
+        st.metric("Demanda Máxima", f"{pico_demanda:,.1f} kW", help=f"Ocorre às {hora_pico}h")
+        st.metric("Energia na Ponta", f"{meta_ponta:,.1f} kWh", delta=f"{perc_ponta}% do total")
+        st.metric("Energia Fora Ponta", f"{meta_fora_ponta:,.1f} kWh")
