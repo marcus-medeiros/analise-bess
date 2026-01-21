@@ -81,8 +81,7 @@ if page == "Página Inicial":
 elif page == "Cenário":
     st.title("⚙️ Configuração de Cenário")
     
-    # --- DADOS DOS ESTADOS DO NORDESTE (Atualizado com Tabela Tarifária) ---
-    # Dados extraídos da imagem: TUSD (R$/MWh), TE, ICMS(%), PIS(1%), COFINS(4%)
+    # --- 1. BASE DE DADOS (Definida no início para ser usada em tudo) ---
     nordeste_data = {
         "Alagoas": {
             "lat": -9.66625, "lon": -35.7351, "irradiacao": 5.45,
@@ -140,112 +139,94 @@ elif page == "Cenário":
         }
     }
 
-    # DataFrame para o Mapa
+    # --- 2. LÓGICA DE ZOOM DINÂMICO ---
+    # Verifica qual estado está selecionado no session_state (pela chave 'state_selector')
+    # Se ainda não houver seleção (primeira vez que roda), pega o primeiro da lista (Alagoas)
+    default_state = sorted(nordeste_data.keys())[0]
+    current_state_name = st.session_state.get("state_selector", default_state)
+    
+    # Define o centro e o zoom baseado no estado atual
+    view_lat = nordeste_data[current_state_name]["lat"]
+    view_lon = nordeste_data[current_state_name]["lon"]
+    view_zoom = 7.0 # Zoom mais próximo para focar no estado
+    
     map_df = pd.DataFrame.from_dict(nordeste_data, orient='index')
 
-    # DataFrame para o Gráfico de Barras
     states_list = list(nordeste_data.keys())
     irradiacao_list = [nordeste_data[s]['irradiacao'] for s in states_list]
     df_irr = pd.DataFrame({'Estado': states_list, 'Irradiação (kWh/m²/dia)': irradiacao_list})
     df_irr = df_irr.sort_values(by='Irradiação (kWh/m²/dia)', ascending=True)
 
-    # --- LAYOUT SUPERIOR: MAPA E GRÁFICO ---
     col_map_viz, col_chart_viz = st.columns([1, 1]) 
 
     with col_map_viz:
         st.subheader("📍 Localização Geográfica")
-        # Zoom ajustado para 5.5 para focar melhor no Nordeste
-        st.map(map_df, zoom=5.5, use_container_width=True, height=450)
+        # AQUI ESTÁ A MÁGICA: Passamos latitude, longitude e zoom dinâmicos
+        st.map(
+            map_df, 
+            latitude=view_lat, 
+            longitude=view_lon, 
+            zoom=view_zoom, 
+            use_container_width=True, 
+            height=450
+        )
 
     with col_chart_viz:
         st.subheader("☀️ Irradiação Média Regional")
+        # Destacar a barra do estado selecionado
+        colors = ['#1f77b4' if estado == current_state_name else '#d3d3d3' for estado in df_irr['Estado']]
+        
         fig = px.bar(
             df_irr,
             x='Irradiação (kWh/m²/dia)',
             y='Estado',
             orientation='h',
             text='Irradiação (kWh/m²/dia)',
-            color='Irradiação (kWh/m²/dia)',
-            color_continuous_scale='YlOrRd'
         )
-        fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+        # Atualiza a cor para destacar o escolhido
+        fig.update_traces(marker_color=colors, texttemplate='%{text:.2f}', textposition='outside')
+        
         fig.update_layout(
             yaxis_title=None,
             xaxis_title="GHI Médio (kWh/m²/dia)",
             height=450,
             margin=dict(l=0, r=0, t=30, b=0)
         )
-        fig.update_coloraxes(showscale=False)
         st.plotly_chart(fig, use_container_width=True)
 
 
     st.markdown("---")
 
-    # --- SELEÇÃO DE ESTADO E EXIBIÇÃO DE DADOS ---
+    # --- 4. SELEÇÃO DE PARÂMETROS ---
     st.subheader("Definição de Parâmetros Tarifários (Grupo A4 - Verde)")
     
-    # Seleção
+    # O parametro KEY é fundamental: ele conecta esse input com o session_state lido lá em cima
     state_selected = st.selectbox(
         "Selecione o Estado do Cliente:",
-        options=sorted(nordeste_data.keys())
+        options=sorted(nordeste_data.keys()),
+        key="state_selector" 
     )
     
-    # Recupera dados do estado selecionado
     state_info = nordeste_data[state_selected]
-    
-    # Salva no session state para uso posterior
     st.session_state['selected_state_data'] = state_info
 
-    # Display 1: Dados da Concessionária e Tarifas
+    # Exibição dos KPIs
     st.markdown(f"**Concessionária:** {state_info['concessionaria']}")
     
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-    
-    with kpi1:
-        st.metric(
-            label="TUSD Ponta",
-            value=f"R$ {state_info['tusd_p']:.2f}",
-            help="Tarifa de Uso do Sistema de Distribuição no Horário de Ponta (R$/MWh)"
-        )
-    with kpi2:
-        st.metric(
-            label="TUSD Fora Ponta",
-            value=f"R$ {state_info['tusd_fp']:.2f}",
-            help="Tarifa de Uso do Sistema de Distribuição no Horário Fora de Ponta (R$/MWh)"
-        )
-    with kpi3:
-        st.metric(
-            label="Tarifa de Energia (TE)",
-            value=f"R$ {state_info['te']:.2f}",
-            help="Tarifa de Energia (R$/MWh)"
-        )
-    with kpi4:
-        # Soma Simples TUSD P + TE para noção de custo total (sem impostos aqui para simplificar visualização rápida)
-        total_ponta = state_info['tusd_p'] + state_info['te']
-        st.metric(
-            label="Total Ponta (s/ imp)",
-            value=f"R$ {total_ponta:.2f}",
-            delta="Custo Base"
-        )
+    with kpi1: st.metric("TUSD Ponta", f"R$ {state_info['tusd_p']:.2f}")
+    with kpi2: st.metric("TUSD Fora Ponta", f"R$ {state_info['tusd_fp']:.2f}")
+    with kpi3: st.metric("Tarifa de Energia (TE)", f"R$ {state_info['te']:.2f}")
+    with kpi4: st.metric("Total Ponta (s/ imp)", f"R$ {(state_info['tusd_p'] + state_info['te']):.2f}")
 
-    # Display 2: Impostos e Ambiental
     st.markdown("##### Dados Tributários e Ambientais")
     imp1, imp2, imp3, amb1 = st.columns(4)
-    
-    with imp1:
-        st.metric("ICMS", f"{state_info['icms']*100:.1f}%")
-    
-    with imp2:
-        # Soma PIS (1%) + COFINS (4%) conforme tabela
-        pis_cofins = state_info['pis'] + state_info['cofins']
-        st.metric("PIS + COFINS", f"{pis_cofins*100:.1f}%", help="PIS (1%) + COFINS (4%)")
-        
-    with imp3:
-        total_impostos = state_info['icms'] + state_info['pis'] + state_info['cofins']
-        st.metric("Carga Tributária Total", f"{total_impostos*100:.1f}%")
-        
-    with amb1:
-        st.metric("Irradiação Local", f"{state_info['irradiacao']} kWh/m²", delta="Média Diária")
+    with imp1: st.metric("ICMS", f"{state_info['icms']*100:.1f}%")
+    with imp2: st.metric("PIS + COFINS", f"{(state_info['pis'] + state_info['cofins'])*100:.1f}%")
+    with imp3: st.metric("Carga Tributária", f"{(state_info['icms'] + state_info['pis'] + state_info['cofins'])*100:.1f}%")
+    with amb1: st.metric("Irradiação Local", f"{state_info['irradiacao']} kWh/m²")
+
+
 elif page == "Análise":
     st.title("📊 Análise de Resultados")
     st.write("Em construção...")
