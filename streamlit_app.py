@@ -323,7 +323,7 @@ elif page == "Análise":
         # O x0=18 e x1=20.9 garante que cubra as colunas das 18, 19 e 20h visualmente
         fig.add_vrect(
             x0=18, x1=21, 
-            fillcolor="red", opacity=0.15, 
+            fillcolor="red", opacity=0.30, 
             layer="below", line_width=0,
             annotation_text="Horário de Ponta", 
             annotation_position="top left",
