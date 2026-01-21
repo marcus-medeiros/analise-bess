@@ -81,72 +81,110 @@ if page == "Página Inicial":
 elif page == "Cenário":
     st.title("⚙️ Configuração de Cenário")
     
-    # --- DADOS DOS ESTADOS DO NORDESTE (Base Interna) ---
-    # Mesmo dicionário anterior
+    # --- DADOS DOS ESTADOS DO NORDESTE (Atualizado com Tabela Tarifária) ---
+    # Dados extraídos da imagem: TUSD (R$/MWh), TE, ICMS(%), PIS(1%), COFINS(4%)
     nordeste_data = {
-        "Alagoas": {"lat": -9.66625, "lon": -35.7351, "icms": 0.19, "pis_cofins": 0.0925, "irradiacao": 5.45},
-        "Bahia": {"lat": -12.9704, "lon": -38.5124, "icms": 0.205, "pis_cofins": 0.0925, "irradiacao": 5.80},
-        "Ceará": {"lat": -3.71722, "lon": -38.5434, "icms": 0.20, "pis_cofins": 0.0925, "irradiacao": 5.90},
-        "Maranhão": {"lat": -2.53073, "lon": -44.3068, "icms": 0.23, "pis_cofins": 0.0925, "irradiacao": 5.20},
-        "Paraíba": {"lat": -7.11532, "lon": -34.861, "icms": 0.20, "pis_cofins": 0.0925, "irradiacao": 5.90},
-        "Pernambuco": {"lat": -8.05428, "lon": -34.8813, "icms": 0.205, "pis_cofins": 0.0925, "irradiacao": 5.70},
-        "Piauí": {"lat": -5.08921, "lon": -42.8016, "icms": 0.225, "pis_cofins": 0.0925, "irradiacao": 5.85},
-        "Rio Grande do Norte": {"lat": -5.79448, "lon": -35.211, "icms": 0.20, "pis_cofins": 0.0925, "irradiacao": 6.10},
-        "Sergipe": {"lat": -10.9472, "lon": -37.0731, "icms": 0.19, "pis_cofins": 0.0925, "irradiacao": 5.40}
+        "Alagoas": {
+            "lat": -9.66625, "lon": -35.7351, "irradiacao": 5.45,
+            "concessionaria": "Equatorial AL",
+            "tusd_p": 1841.93, "tusd_fp": 83.51, "te": -3.06, 
+            "icms": 0.19, "pis": 0.01, "cofins": 0.04
+        },
+        "Bahia": {
+            "lat": -12.9704, "lon": -38.5124, "irradiacao": 5.80,
+            "concessionaria": "Neoenergia Coelba",
+            "tusd_p": 2676.04, "tusd_fp": 101.42, "te": 32.93, 
+            "icms": 0.205, "pis": 0.01, "cofins": 0.04
+        },
+        "Ceará": {
+            "lat": -3.71722, "lon": -38.5434, "irradiacao": 5.90,
+            "concessionaria": "Enel CE",
+            "tusd_p": 1162.90, "tusd_fp": 88.46, "te": 38.09, 
+            "icms": 0.20, "pis": 0.01, "cofins": 0.04
+        },
+        "Maranhão": {
+            "lat": -2.53073, "lon": -44.3068, "irradiacao": 5.20,
+            "concessionaria": "Equatorial MA",
+            "tusd_p": 2377.47, "tusd_fp": 116.15, "te": 38.60, 
+            "icms": 0.23, "pis": 0.01, "cofins": 0.04
+        },
+        "Paraíba": {
+            "lat": -7.11532, "lon": -34.861, "irradiacao": 5.90,
+            "concessionaria": "Energisa PB",
+            "tusd_p": 1263.03, "tusd_fp": 96.59, "te": 30.30, 
+            "icms": 0.20, "pis": 0.01, "cofins": 0.04
+        },
+        "Pernambuco": {
+            "lat": -8.05428, "lon": -34.8813, "irradiacao": 5.70,
+            "concessionaria": "Neoenergia Pernambuco",
+            "tusd_p": 1244.41, "tusd_fp": 94.68, "te": 29.14, 
+            "icms": 0.205, "pis": 0.01, "cofins": 0.04
+        },
+        "Piauí": {
+            "lat": -5.08921, "lon": -42.8016, "irradiacao": 5.85,
+            "concessionaria": "Equatorial PI",
+            "tusd_p": 2296.63, "tusd_fp": 140.21, "te": 33.71, 
+            "icms": 0.225, "pis": 0.01, "cofins": 0.04
+        },
+        "Rio Grande do Norte": {
+            "lat": -5.79448, "lon": -35.211, "irradiacao": 6.10,
+            "concessionaria": "Neoenergia Cosern",
+            "tusd_p": 1867.81, "tusd_fp": 91.56, "te": 29.46, 
+            "icms": 0.20, "pis": 0.01, "cofins": 0.04
+        },
+        "Sergipe": {
+            "lat": -10.9472, "lon": -37.0731, "irradiacao": 5.40,
+            "concessionaria": "Energisa SE",
+            "tusd_p": 1702.94, "tusd_fp": 84.93, "te": 23.15, 
+            "icms": 0.19, "pis": 0.01, "cofins": 0.04
+        }
     }
 
     # DataFrame para o Mapa
     map_df = pd.DataFrame.from_dict(nordeste_data, orient='index')
 
-    # DataFrame para o Gráfico de Barras (Extraindo dados do dicionário)
+    # DataFrame para o Gráfico de Barras
     states_list = list(nordeste_data.keys())
     irradiacao_list = [nordeste_data[s]['irradiacao'] for s in states_list]
     df_irr = pd.DataFrame({'Estado': states_list, 'Irradiação (kWh/m²/dia)': irradiacao_list})
-    # Ordenando para o gráfico ficar mais fácil de ler
     df_irr = df_irr.sort_values(by='Irradiação (kWh/m²/dia)', ascending=True)
 
-
-    # --- LAYOUT LADO A LADO (Visualização) ---
-    # Cria duas colunas: Esquerda para Mapa, Direita para Gráfico
-    col_map_viz, col_chart_viz = st.columns([1, 1]) # Proporção 50%/50%
+    # --- LAYOUT SUPERIOR: MAPA E GRÁFICO ---
+    col_map_viz, col_chart_viz = st.columns([1, 1]) 
 
     with col_map_viz:
         st.subheader("📍 Localização Geográfica")
-        # O parâmetro height ajuda a alinhar a altura com o gráfico ao lado
-        st.map(map_df, zoom=5, use_container_width=True, height=450)
+        # Zoom ajustado para 5.5 para focar melhor no Nordeste
+        st.map(map_df, zoom=5.5, use_container_width=True, height=450)
 
     with col_chart_viz:
         st.subheader("☀️ Irradiação Média Regional")
-        # Criando o gráfico de barras horizontal
         fig = px.bar(
             df_irr,
             x='Irradiação (kWh/m²/dia)',
             y='Estado',
-            orientation='h', # 'h' define que é horizontal
-            text='Irradiação (kWh/m²/dia)', # Mostra o valor na barra
-            color='Irradiação (kWh/m²/dia)', # Cor gradiente baseada no valor
-            color_continuous_scale='YlOrRd' # Escala de cor (Amarelo -> Laranja -> Vermelho)
+            orientation='h',
+            text='Irradiação (kWh/m²/dia)',
+            color='Irradiação (kWh/m²/dia)',
+            color_continuous_scale='YlOrRd'
         )
-        
-        # Ajustes finos de layout do gráfico
         fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
         fig.update_layout(
-            yaxis_title=None, # Remove rótulo do eixo Y (já são os nomes dos estados)
+            yaxis_title=None,
             xaxis_title="GHI Médio (kWh/m²/dia)",
-            height=450, # Altura igual ao mapa para ficarem alinhados
-            margin=dict(l=0, r=0, t=30, b=0) # Margens para otimizar espaço
+            height=450,
+            margin=dict(l=0, r=0, t=30, b=0)
         )
-        # Oculta a barra de cores lateral para economizar espaço
         fig.update_coloraxes(showscale=False)
-        
         st.plotly_chart(fig, use_container_width=True)
 
 
     st.markdown("---")
 
-    # --- SELEÇÃO E DETALHES (Mantido abaixo) ---
-    st.subheader("Definição de Parâmetros do Projeto")
+    # --- SELEÇÃO DE ESTADO E EXIBIÇÃO DE DADOS ---
+    st.subheader("Definição de Parâmetros Tarifários (Grupo A4 - Verde)")
     
+    # Seleção
     state_selected = st.selectbox(
         "Selecione o Estado do Cliente:",
         options=sorted(nordeste_data.keys())
@@ -154,18 +192,60 @@ elif page == "Cenário":
     
     # Recupera dados do estado selecionado
     state_info = nordeste_data[state_selected]
-
-    st.info(f"Parâmetros Tributários e Ambientais: **{state_selected}**")
-    c1, c2, c3, c4 = st.columns(4)
-    with c1: st.metric("ICMS (Proj. 2025)", f"{state_info['icms']*100:.1f}%")
-    with c2: st.metric("PIS/COFINS", f"{state_info['pis_cofins']*100:.2f}%")
-    with c3: st.metric("Carga Tributária Total", f"{(state_info['icms'] + state_info['pis_cofins'])*100:.2f}%")
-    # Adicionei um destaque na métrica de irradiação do estado selecionado
-    with c4: st.metric("Irradiação Local", f"{state_info['irradiacao']} kWh/m²", delta="Referência para Cálculo")
-
-    # Salva no session state
+    
+    # Salva no session state para uso posterior
     st.session_state['selected_state_data'] = state_info
 
+    # Display 1: Dados da Concessionária e Tarifas
+    st.markdown(f"**Concessionária:** {state_info['concessionaria']}")
+    
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    
+    with kpi1:
+        st.metric(
+            label="TUSD Ponta",
+            value=f"R$ {state_info['tusd_p']:.2f}",
+            help="Tarifa de Uso do Sistema de Distribuição no Horário de Ponta (R$/MWh)"
+        )
+    with kpi2:
+        st.metric(
+            label="TUSD Fora Ponta",
+            value=f"R$ {state_info['tusd_fp']:.2f}",
+            help="Tarifa de Uso do Sistema de Distribuição no Horário Fora de Ponta (R$/MWh)"
+        )
+    with kpi3:
+        st.metric(
+            label="Tarifa de Energia (TE)",
+            value=f"R$ {state_info['te']:.2f}",
+            help="Tarifa de Energia (R$/MWh)"
+        )
+    with kpi4:
+        # Soma Simples TUSD P + TE para noção de custo total (sem impostos aqui para simplificar visualização rápida)
+        total_ponta = state_info['tusd_p'] + state_info['te']
+        st.metric(
+            label="Total Ponta (s/ imp)",
+            value=f"R$ {total_ponta:.2f}",
+            delta="Custo Base"
+        )
+
+    # Display 2: Impostos e Ambiental
+    st.markdown("##### Dados Tributários e Ambientais")
+    imp1, imp2, imp3, amb1 = st.columns(4)
+    
+    with imp1:
+        st.metric("ICMS", f"{state_info['icms']*100:.1f}%")
+    
+    with imp2:
+        # Soma PIS (1%) + COFINS (4%) conforme tabela
+        pis_cofins = state_info['pis'] + state_info['cofins']
+        st.metric("PIS + COFINS", f"{pis_cofins*100:.1f}%", help="PIS (1%) + COFINS (4%)")
+        
+    with imp3:
+        total_impostos = state_info['icms'] + state_info['pis'] + state_info['cofins']
+        st.metric("Carga Tributária Total", f"{total_impostos*100:.1f}%")
+        
+    with amb1:
+        st.metric("Irradiação Local", f"{state_info['irradiacao']} kWh/m²", delta="Média Diária")
 elif page == "Análise":
     st.title("📊 Análise de Resultados")
     st.write("Em construção...")
