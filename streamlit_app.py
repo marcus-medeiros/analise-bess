@@ -1,4 +1,7 @@
 import streamlit as st
+# --- PREPARAÇÃO DE DADOS PARA VISUALIZAÇÃO ---
+import pandas as pd
+import plotly.express as px
 
 # 1. Configuração da Página
 st.set_page_config(
@@ -92,10 +95,6 @@ elif page == "Cenário":
         "Sergipe": {"lat": -10.9472, "lon": -37.0731, "icms": 0.19, "pis_cofins": 0.0925, "irradiacao": 5.40}
     }
 
-    # --- PREPARAÇÃO DE DADOS PARA VISUALIZAÇÃO ---
-    import pandas as pd
-    import plotly.express as px
-
     # DataFrame para o Mapa
     map_df = pd.DataFrame.from_dict(nordeste_data, orient='index')
 
@@ -148,25 +147,21 @@ elif page == "Cenário":
     # --- SELEÇÃO E DETALHES (Mantido abaixo) ---
     st.subheader("Definição de Parâmetros do Projeto")
     
-    col_sel, col_info = st.columns([1, 2])
-    
-    with col_sel:
-        state_selected = st.selectbox(
-            "Selecione o Estado do Cliente:",
-            options=sorted(nordeste_data.keys())
-        )
+    state_selected = st.selectbox(
+        "Selecione o Estado do Cliente:",
+        options=sorted(nordeste_data.keys())
+    )
     
     # Recupera dados do estado selecionado
     state_info = nordeste_data[state_selected]
 
-    with col_info:
-        st.info(f"Parâmetros Tributários e Ambientais: **{state_selected}**")
-        c1, c2, c3, c4 = st.columns(4)
-        with c1: st.metric("ICMS (Proj. 2025)", f"{state_info['icms']*100:.1f}%")
-        with c2: st.metric("PIS/COFINS", f"{state_info['pis_cofins']*100:.2f}%")
-        with c3: st.metric("Carga Tributária Total", f"{(state_info['icms'] + state_info['pis_cofins'])*100:.2f}%")
-        # Adicionei um destaque na métrica de irradiação do estado selecionado
-        with c4: st.metric("Irradiação Local", f"{state_info['irradiacao']} kWh/m²", delta="Referência para Cálculo")
+    st.info(f"Parâmetros Tributários e Ambientais: **{state_selected}**")
+    c1, c2, c3, c4 = st.columns(4)
+    with c1: st.metric("ICMS (Proj. 2025)", f"{state_info['icms']*100:.1f}%")
+    with c2: st.metric("PIS/COFINS", f"{state_info['pis_cofins']*100:.2f}%")
+    with c3: st.metric("Carga Tributária Total", f"{(state_info['icms'] + state_info['pis_cofins'])*100:.2f}%")
+    # Adicionei um destaque na métrica de irradiação do estado selecionado
+    with c4: st.metric("Irradiação Local", f"{state_info['irradiacao']} kWh/m²", delta="Referência para Cálculo")
 
     # Salva no session state
     st.session_state['selected_state_data'] = state_info
