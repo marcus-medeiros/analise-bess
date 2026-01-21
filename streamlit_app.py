@@ -3,6 +3,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import pydeck as pdk # Importando a biblioteca de mapas avançada
+import folium
+from streamlit_folium import st_folium
 
 # 1. Configuração da Página
 st.set_page_config(
@@ -94,12 +96,6 @@ elif page == "Cenário":
         "Rio Grande do Norte": {"lat": -5.79448, "lon": -35.211, "irradiacao": 6.10, "concessionaria": "Neoenergia Cosern", "tusd_p": 1867.81, "tusd_fp": 91.56, "te": 29.46, "icms": 0.20, "pis": 0.01, "cofins": 0.04},
         "Sergipe": {"lat": -10.9472, "lon": -37.0731, "irradiacao": 5.40, "concessionaria": "Energisa SE", "tusd_p": 1702.94, "tusd_fp": 84.93, "te": 23.15, "icms": 0.19, "pis": 0.01, "cofins": 0.04}
     }
-
-    # --- 2. PREPARAÇÃO (Importando Folium) ---
-    import folium
-    from streamlit_folium import st_folium
-    import pandas as pd
-    import plotly.express as px
 
     # Lógica de Seleção (Antes do Mapa)
     default_state = sorted(nordeste_data.keys())[0]
