@@ -16,7 +16,8 @@ st.set_page_config(
 # --- SIDEBAR ---
 with st.sidebar:
     # Espaço para Logo (Placeholder)
-    st.image("https://placehold.co/250x100/png?text=LOGO+BESS", use_container_width=True)
+
+    st.image("bessfv", use_container_width=True)
     st.markdown("---")
     
     st.header("Menu Principal")
