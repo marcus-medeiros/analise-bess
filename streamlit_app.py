@@ -17,7 +17,7 @@ st.set_page_config(
 with st.sidebar:
     # Espaço para Logo (Placeholder)
 
-    st.image("bessfv", use_container_width=True)
+    st.image("bessfv.png", use_container_width=True)
     st.markdown("---")
     
     st.header("Menu Principal")
